@@ -1,0 +1,99 @@
+body {
+    background-color: #2E3A46;
+    font-family: 'Roboto', sans-serif;
+}
+
+.container {
+    max-width: 100%;
+    padding: 20px;
+}
+
+.row {
+    margin: 0;
+}
+
+.col-12, .col-md-6, .col-lg-4 {
+    background-color: #3C4A57;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+h1 {
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 30px;
+}
+h2 {
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 30px;
+}
+label {
+    color: #B0BEC5;
+}
+
+input[type="number"], .btn {
+    border-radius: 30px;
+}
+
+.form-control {
+    background-color: #546E7A;
+    color: #ffffff;
+    border: none;
+}
+
+.form-control:focus {
+    background-color: #455A64;
+    color: #ffffff;
+    box-shadow: none;
+    border-color: #007bff;
+}
+
+.btn-primary {
+    background-color: #1E88E5;
+    border: none;
+    margin-top: 15px;
+}
+
+.btn-success {
+    background-color: #00ACC1;
+    border: none;
+    margin-top: 15px;
+}
+
+.btn-primary:hover, .btn-success:hover {
+    background-color: #1565C0;
+}
+
+.mt-3 {
+    text-align: center;
+}
+
+/* Tabla */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #f9fcff;
+    color: #ffffff;
+}
+
+table th, table td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #b4b7b9;
+}
+
+table thead {
+    background-color: #0288D1;
+    color: white;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #f1fbff;
+}
+
+table tbody tr:hover {
+    background-color: #0d7aad;
+}
