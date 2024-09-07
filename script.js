@@ -102,82 +102,55 @@ function calcularHorasExtras(startTime, endTime) {
         nocturnalSeconds: Math.round(nocturnalOvertimeSeconds)
     };
 }
-function actualizarTotales(totals, status, horasExtras, restar = false) {
-    if (!status || horasExtras === "No hay horas extras") {
-        return; // Si no hay estado o no hay horas, no hacemos nada
-    }
+function actualizarTotales(totals, status, horasExtrasDiurnas, horasExtrasNocturnas, restar = false) {
+    const diurnasPartes = horasExtrasDiurnas.split(':');
+    const nocturnasPartes = horasExtrasNocturnas.split(':');
 
-    // Usamos un regex para extraer horas, minutos y segundos
-    const timeRegex = /(\d+ horas?)?\s*(\d+ minutos?)?\s*(\d+ segundos?)?/;
-    const match = horasExtras.match(timeRegex);
+    const segundosDiurnas = parseInt(diurnasPartes[0]) * 3600 + parseInt(diurnasPartes[1]) * 60 + parseInt(diurnasPartes[2]);
+    const segundosNocturnas = parseInt(nocturnasPartes[0]) * 3600 + parseInt(nocturnasPartes[1]) * 60 + parseInt(nocturnasPartes[2]);
 
-    if (!match) {
-        console.log("Formato de horas incorrecto:", horasExtras);
-        return;
-    }
-
-    let horas = parseInt(match[1]) || 0;
-    let minutos = parseInt(match[2]) || 0;
-    let segundos = parseInt(match[3]) || 0;
-
-    // Convertimos todo a minutos
-    const totalMinutos = horas * 60 + minutos + Math.floor(segundos / 60);
-
-    // Si estamos restando, usamos un factor negativo
+    // Factor determina si restamos o sumamos
     const factor = restar ? -1 : 1;
 
-    // Determinar el porcentaje basado en el tipo de horas
-    let porcentaje = "25%"; // Por defecto, se asigna al 25%
-    if (horasExtras.includes("50%")) {
-        porcentaje = "50%";
-    } else if (horasExtras.includes("100%")) {
-        porcentaje = "100%";
-    } else if (horasExtras.includes("0%")) {
-        porcentaje = "0%";
-    }
-
-    // Actualizar los totales según el estado
     if (status === "AUTORIZADO") {
-        totals.aprobadas[porcentaje] += totalMinutos * factor;
+        totals.aprobadas["25%"] += segundosDiurnas * factor;
+        totals.aprobadas["50%"] += segundosNocturnas * factor;
     } else if (status === "RECHAZADO") {
-        totals.rechazadas[porcentaje] += totalMinutos * factor;
+        totals.rechazadas["25%"] += segundosDiurnas * factor;
+        totals.rechazadas["50%"] += segundosNocturnas * factor;
     } else if (status === "PENDIENTE") {
-        totals.pendientes[porcentaje] += totalMinutos * factor;
+        totals.pendientes["25%"] += segundosDiurnas * factor;
+        totals.pendientes["50%"] += segundosNocturnas * factor;
     }
 }
+
 function formatTime(seconds) {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    let result = "";
 
-    if (hours > 0) {
-        result += `${hours} hora${hours > 1 ? "s" : ""}`;
-    }
-    if (mins > 0) {
-        if (result) result += " y ";
-        result += `${mins} minuto${mins > 1 ? "s" : ""}`;
-    }
-    if (secs > 0) {
-        if (result) result += " y ";
-        result += `${secs} segundo${secs > 1 ? "s" : ""}`;
-    }
+    // Aseguramos que horas, minutos y segundos siempre tengan dos dígitos
+    const formattedTime = [
+        String(hours).padStart(2, '0'),
+        String(mins).padStart(2, '0'),
+        String(secs).padStart(2, '0')
+    ].join(':');
 
-    return result || "No hay horas extras";
+    return formattedTime;
 }
+
 function mostrarResumen() {
-    const resumenContainer = document.getElementById('resumen-container');
+    const totalAprobadas = formatTime(totals.aprobadas["0%"] + totals.aprobadas["25%"] + totals.aprobadas["50%"] + totals.aprobadas["100%"]);
+    const totalRechazadas = formatTime(totals.rechazadas["0%"] + totals.rechazadas["25%"] + totals.rechazadas["50%"] + totals.rechazadas["100%"]);
+    const totalPendientes = formatTime(totals.pendientes["0%"] + totals.pendientes["25%"] + totals.pendientes["50%"] + totals.pendientes["100%"]);
+    const totalGeneral = formatTime(
+        totals.aprobadas["0%"] + totals.rechazadas["0%"] + totals.pendientes["0%"] +
+        totals.aprobadas["25%"] + totals.rechazadas["25%"] + totals.pendientes["25%"] +
+        totals.aprobadas["50%"] + totals.rechazadas["50%"] + totals.pendientes["50%"] +
+        totals.aprobadas["100%"] + totals.rechazadas["100%"] + totals.pendientes["100%"]
+    );
 
-    if (!resumenContainer) {
-        const container = document.createElement('div');
-        container.id = 'resumen-container';
-        document.getElementById('output').appendChild(container);
-    } else {
-        resumenContainer.innerHTML = '';
-    }
-
-    // Crear el contenido HTML para las cuatro tablas de resumen
-    let resumenContent = `
+    document.getElementById('resumen-container').innerHTML = `
         <div class="row">
             <div class="col-md-6">
                 <h3>Total H.E. Aprobadas</h3>
@@ -187,12 +160,7 @@ function mostrarResumen() {
                         <tr><td>Total H. E. Aprobadas al 25%:</td><td>${formatTime(totals.aprobadas["25%"])}</td></tr>
                         <tr><td>Total H. E. Aprobadas al 50%:</td><td>${formatTime(totals.aprobadas["50%"])}</td></tr>
                         <tr><td>Total H. E. Aprobadas al 100%:</td><td>${formatTime(totals.aprobadas["100%"])}</td></tr>
-                        <tr><td><strong>Total Horas Extras Aprobadas:</strong></td><td><strong>${formatTime(
-                          totals.aprobadas["0%"] +
-                          totals.aprobadas["25%"] +
-                          totals.aprobadas["50%"] +
-                          totals.aprobadas["100%"]
-                        )}</strong></td></tr>
+                        <tr><td><strong>Total Horas Extras Aprobadas:</strong></td><td><strong>${totalAprobadas}</strong></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -204,12 +172,7 @@ function mostrarResumen() {
                         <tr><td>Total H. E. Rechazadas al 25%:</td><td>${formatTime(totals.rechazadas["25%"])}</td></tr>
                         <tr><td>Total H. E. Rechazadas al 50%:</td><td>${formatTime(totals.rechazadas["50%"])}</td></tr>
                         <tr><td>Total H. E. Rechazadas al 100%:</td><td>${formatTime(totals.rechazadas["100%"])}</td></tr>
-                        <tr><td><strong>Total Horas Extras Rechazadas:</strong></td><td><strong>${formatTime(
-                          totals.rechazadas["0%"] +
-                          totals.rechazadas["25%"] +
-                          totals.rechazadas["50%"] +
-                          totals.rechazadas["100%"]
-                        )}</strong></td></tr>
+                        <tr><td><strong>Total Horas Extras Rechazadas:</strong></td><td><strong>${totalRechazadas}</strong></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -223,12 +186,7 @@ function mostrarResumen() {
                         <tr><td>Total H. E. Pendientes al 25%:</td><td>${formatTime(totals.pendientes["25%"])}</td></tr>
                         <tr><td>Total H. E. Pendientes al 50%:</td><td>${formatTime(totals.pendientes["50%"])}</td></tr>
                         <tr><td>Total H. E. Pendientes al 100%:</td><td>${formatTime(totals.pendientes["100%"])}</td></tr>
-                        <tr><td><strong>Total Horas Extras Pendientes:</strong></td><td><strong>${formatTime(
-                          totals.pendientes["0%"] +
-                          totals.pendientes["25%"] +
-                          totals.pendientes["50%"] +
-                          totals.pendientes["100%"]
-                        )}</strong></td></tr>
+                        <tr><td><strong>Total Horas Extras Pendientes:</strong></td><td><strong>${totalPendientes}</strong></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -237,46 +195,23 @@ function mostrarResumen() {
                 <table class="table table-bordered">
                     <tbody>
                         <tr><td>Total H. E. al 0%:</td><td>${formatTime(
-                          totals.aprobadas["0%"] +
-                          totals.rechazadas["0%"] +
-                          totals.pendientes["0%"]
+                          totals.aprobadas["0%"] + totals.rechazadas["0%"] + totals.pendientes["0%"]
                         )}</td></tr>
                         <tr><td>Total H. E. al 25%:</td><td>${formatTime(
-                          totals.aprobadas["25%"] +
-                          totals.rechazadas["25%"] +
-                          totals.pendientes["25%"]
+                          totals.aprobadas["25%"] + totals.rechazadas["25%"] + totals.pendientes["25%"]
                         )}</td></tr>
                         <tr><td>Total H. E. al 50%:</td><td>${formatTime(
-                          totals.aprobadas["50%"] +
-                          totals.rechazadas["50%"] +
-                          totals.pendientes["50%"]
+                          totals.aprobadas["50%"] + totals.rechazadas["50%"] + totals.pendientes["50%"]
                         )}</td></tr>
                         <tr><td>Total H. E. al 100%:</td><td>${formatTime(
-                          totals.aprobadas["100%"] +
-                          totals.rechazadas["100%"] +
-                          totals.pendientes["100%"]
+                          totals.aprobadas["100%"] + totals.rechazadas["100%"] + totals.pendientes["100%"]
                         )}</td></tr>
-                        <tr><td><strong>Total Horas Extras:</strong></td><td><strong>${formatTime(
-                          totals.aprobadas["0%"] +
-                          totals.rechazadas["0%"] +
-                          totals.pendientes["0%"] +
-                          totals.aprobadas["25%"] +
-                          totals.rechazadas["25%"] +
-                          totals.pendientes["25%"] +
-                          totals.aprobadas["50%"] +
-                          totals.rechazadas["50%"] +
-                          totals.pendientes["50%"] +
-                          totals.aprobadas["100%"] +
-                          totals.rechazadas["100%"] +
-                          totals.pendientes["100%"]
-                        )}</strong></td></tr>
+                        <tr><td><strong>Total Horas Extras:</strong></td><td><strong>${totalGeneral}</strong></td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     `;
-
-    document.getElementById('resumen-container').innerHTML = resumenContent;
 }
 function generateReport(filteredData) {
     let dailyData = {};
@@ -305,24 +240,29 @@ function generateReport(filteredData) {
     for (let date in dailyData) {
         const record = dailyData[date];
 
-        let startTimeFormatted = record.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        let endTimeFormatted = record.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        let startTimeFormatted = record.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        let endTimeFormatted = record.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
         let { diurnalSeconds, nocturnalSeconds } = calcularHorasExtras(record.startTime, record.endTime);
 
         let diurnalFormatted = formatTime(diurnalSeconds);
         let nocturnalFormatted = formatTime(nocturnalSeconds);
 
+        // Verificación de alerta por inconsistencias
+        let alertClass = '';
+        if (record.startTime.getTime() === record.endTime.getTime() || (diurnalSeconds === 0 && nocturnalSeconds === 0)) {
+            alertClass = 'alerta-horas'; // Clase para resaltar problemas
+        }
+
         tableContent += `
             <tr>
-                <td>${record.id}</td>
-                <td>${record.date}</td>
-                <td>${startTimeFormatted}</td>
-                <td>${endTimeFormatted}</td>
-                <td>${diurnalFormatted}</td>
-                <td>${nocturnalFormatted}</td>
-                <td>
-                    <select class="status-select" onchange="updateTotal(this, '${record.date}')">
+                <td class="${alertClass}">${record.date}</td>
+                <td class="${alertClass}">${startTimeFormatted}</td>
+                <td class="${alertClass}">${endTimeFormatted}</td>
+                <td class="${alertClass}">${diurnalFormatted}</td>
+                <td class="${alertClass}">${nocturnalFormatted}</td>
+                <td class="${alertClass}">
+                    <select class="status-select" onchange="updateTotal(this, '${record.date}', '${diurnalFormatted}', '${nocturnalFormatted}')">
                         <option value="AUTORIZADO" selected>AUTORIZADO</option>
                         <option value="RECHAZADO">RECHAZADO</option>
                         <option value="PENDIENTE">PENDIENTE</option>
@@ -332,8 +272,7 @@ function generateReport(filteredData) {
         `;
 
         // Actualizamos los totales de horas extras dependiendo del estado
-        actualizarTotales(totals, 'AUTORIZADO', diurnalFormatted);
-        actualizarTotales(totals, 'AUTORIZADO', nocturnalFormatted);
+        actualizarTotales(totals, 'AUTORIZADO', diurnalFormatted, nocturnalFormatted);
     }
 
     document.getElementById('output').innerHTML = `
@@ -341,7 +280,6 @@ function generateReport(filteredData) {
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Fecha</th>
                     <th>Hora Inicio</th>
                     <th>Hora Fin</th>
@@ -356,43 +294,34 @@ function generateReport(filteredData) {
         </table>
     `;
 
-    // Mostramos el resumen con las horas totales al final
-    mostrarResumen();
-
-    // Aseguramos que el botón PDF esté visible después de generar el reporte
+    // Mostrar el botón de descarga de PDF
     document.getElementById('downloadPdfBtn').style.display = 'block';
+
+    mostrarResumen();
 }
-function updateTotal(selectElement) {
+
+function updateTotal(selectElement, date, horasExtrasDiurnas, horasExtrasNocturnas) {
     const row = selectElement.closest('tr');
-    const diurnalHours = row.children[4].textContent;
-    const nocturnalHours = row.children[5].textContent;
     const newStatus = selectElement.value; // Nuevo estado seleccionado
 
     // Obtener el estado anterior almacenado
     const previousStatus = selectElement.getAttribute('data-previous-status') || ""; 
     selectElement.setAttribute('data-previous-status', newStatus); // Guardar el nuevo estado como el estado anterior para la próxima vez
 
-    // Restar las horas del estado anterior
-    if (diurnalHours !== "No hay horas extras") {
-        actualizarTotales(totals, previousStatus, diurnalHours, true); // true indica que restamos horas
-    }
-
-    if (nocturnalHours !== "No hay horas extras") {
-        actualizarTotales(totals, previousStatus, nocturnalHours, true);
+    // Restar las horas del estado anterior si existe un estado anterior
+    if (previousStatus && previousStatus !== newStatus) {
+        actualizarTotales(totals, previousStatus, horasExtrasDiurnas, horasExtrasNocturnas, true); // true indica que restamos horas
     }
 
     // Sumar las horas del nuevo estado
-    if (diurnalHours !== "No hay horas extras") {
-        actualizarTotales(totals, newStatus, diurnalHours, false); // false indica que sumamos horas
-    }
-
-    if (nocturnalHours !== "No hay horas extras") {
-        actualizarTotales(totals, newStatus, nocturnalHours, false);
+    if (newStatus) {
+        actualizarTotales(totals, newStatus, horasExtrasDiurnas, horasExtrasNocturnas, false); // false indica que sumamos horas
     }
 
     // Regenerar el resumen
     mostrarResumen();
 }
+
 function resetTotals() {
     totals = {
         aprobadas: { "0%": 0, "25%": 0, "50%": 0, "100%": 0 },
@@ -403,6 +332,14 @@ function resetTotals() {
 function downloadPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+
+    // Obtener el ID ingresado por el usuario
+    const reportID = document.getElementById('idInput').value || 'Desconocido';
+
+    // Añadir título al documento
+    const title = `Horas Extras - ID: ${reportID}`;
+    doc.setFontSize(18);
+    doc.text(title, 15, 10); // Posicionamos el título en el PDF
 
     // Obtener el contenido de la tabla
     const table = document.querySelector('#output table');
@@ -415,7 +352,7 @@ function downloadPDF() {
         const cells = row.querySelectorAll('td, th');
 
         cells.forEach((cell, cellIndex) => {
-            if (cellIndex === 6 && rowIndex > 0) { // Columna "Estado"
+            if (cellIndex === 5 && rowIndex > 0) { // Columna "Estado"
                 const selectElement = cell.querySelector('select');
                 rowData.push(selectElement ? selectElement.value : cell.textContent);
             } else {
@@ -426,14 +363,20 @@ function downloadPDF() {
         data.push(rowData);
     });
 
+    // Añadir la tabla al PDF usando autoTable
     doc.autoTable({
         head: [data[0]],  // La primera fila es el encabezado
         body: data.slice(1),  // Las siguientes filas son los datos
         theme: 'grid',
-        headStyles: { fillColor: [0, 123, 255] },
-        margin: { top: 20 }
+        headStyles: { fillColor: [0, 123, 255] }, // Color del encabezado de la tabla
+        startY: 20,  // Empezar después del título
+        margin: { top: 10 }  // Márgenes en la tabla
     });
 
-    doc.save('reporte_horas_extras.pdf');
+    // Guardar el archivo con un nombre dinámico basado en el ID
+    const fileName = `reporte_horas_extras_ID_${reportID}.pdf`;
+    doc.save(fileName);
 }
+
+
 

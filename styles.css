@@ -69,6 +69,11 @@ input[type="number"], .btn {
 .mt-3 {
     text-align: center;
 }
+.alerta-horas {
+    background-color: #ffcccc; /* Fondo rojo claro */
+    color: #ff0000; /* Texto rojo */
+    font-weight: bold;
+}
 
 /* Tabla */
 table {
