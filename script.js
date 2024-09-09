@@ -161,25 +161,16 @@ function formatTime(seconds) {
     return formattedTime;
 }
 function mostrarResumen() {
-    // Totales aprobadas
-    const totalAprobadas25 = formatTime(totals.aprobadas["25%"]);
-    const totalAprobadas50 = formatTime(totals.aprobadas["50%"]);
+    const totalAprobadasDiurnas = totals.aprobadas["25%"];
+    const totalAprobadasNocturnas = totals.aprobadas["50%"];
+    const totalRechazadasDiurnas = totals.rechazadas["25%"];
+    const totalRechazadasNocturnas = totals.rechazadas["50%"];
+    const totalPendientesDiurnas = totals.pendientes["25%"];
+    const totalPendientesNocturnas = totals.pendientes["50%"];
 
-    // Totales rechazadas
-    const totalRechazadas25 = formatTime(totals.rechazadas["25%"]);
-    const totalRechazadas50 = formatTime(totals.rechazadas["50%"]);
-
-    // Totales pendientes
-    const totalPendientes25 = formatTime(totals.pendientes["25%"]);
-    const totalPendientes50 = formatTime(totals.pendientes["50%"]);
-
-    // Totales generales (aprobadas menos rechazadas y pendientes)
-    const totalGeneral25 = formatTime(
-        totals.aprobadas["25%"] - totals.rechazadas["25%"] - totals.pendientes["25%"]
-    );
-    const totalGeneral50 = formatTime(
-        totals.aprobadas["50%"] - totals.rechazadas["50%"] - totals.pendientes["50%"]
-    );
+    // Sumar todas las horas diurnas y nocturnas
+    const totalDiurnas = totalAprobadasDiurnas + totalRechazadasDiurnas + totalPendientesDiurnas;
+    const totalNocturnas = totalAprobadasNocturnas + totalRechazadasNocturnas + totalPendientesNocturnas;
 
     document.getElementById('resumen-container').innerHTML = `
         <div class="row">
@@ -187,8 +178,8 @@ function mostrarResumen() {
                 <h3>Total H.E. Aprobadas</h3>
                 <table class="table table-bordered">
                     <tbody>
-                        <tr><td>Total H. E. Diurnas al 25%:</td><td>${totalAprobadas25}</td></tr>
-                        <tr><td>Total H. E. Nocturnas al 50%:</td><td>${totalAprobadas50}</td></tr>
+                        <tr><td>Total H. E. Diurnas al 25%:</td><td>${formatTime(totalAprobadasDiurnas)}</td></tr>
+                        <tr><td>Total H. E. Nocturnas al 50%:</td><td>${formatTime(totalAprobadasNocturnas)}</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -196,8 +187,8 @@ function mostrarResumen() {
                 <h3>Total H.E. Rechazadas</h3>
                 <table class="table table-bordered">
                     <tbody>
-                        <tr><td>Total H. E. Diurnas al 25%:</td><td>${totalRechazadas25}</td></tr>
-                        <tr><td>Total H. E. Nocturnas al 50%:</td><td>${totalRechazadas50}</td></tr>
+                        <tr><td>Total H. E. Diurnas al 25%:</td><td>${formatTime(totalRechazadasDiurnas)}</td></tr>
+                        <tr><td>Total H. E. Nocturnas al 50%:</td><td>${formatTime(totalRechazadasNocturnas)}</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -205,8 +196,8 @@ function mostrarResumen() {
                 <h3>Total H.E. Pendientes</h3>
                 <table class="table table-bordered">
                     <tbody>
-                        <tr><td>Total H. E. Diurnas al 25%:</td><td>${totalPendientes25}</td></tr>
-                        <tr><td>Total H. E. Nocturnas al 50%:</td><td>${totalPendientes50}</td></tr>
+                        <tr><td>Total H. E. Diurnas al 25%:</td><td>${formatTime(totalPendientesDiurnas)}</td></tr>
+                        <tr><td>Total H. E. Nocturnas al 50%:</td><td>${formatTime(totalPendientesNocturnas)}</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -216,14 +207,25 @@ function mostrarResumen() {
                 <h3>Total General Horas Extras</h3>
                 <table class="table table-bordered">
                     <tbody>
-                        <tr><td>Total H. E. Diurnas al 25%:</td><td>${totalGeneral25}</td></tr>
-                        <tr><td>Total H. E. Nocturnas al 50%:</td><td>${totalGeneral50}</td></tr>
+                        <tr><td>Total H. E. Diurnas al 25%:</td><td>${formatTime(totalDiurnas)}</td></tr>
+                        <tr><td>Total H. E. Nocturnas al 50%:</td><td>${formatTime(totalNocturnas)}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Suma Total de Horas Extras</h3>
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr><td><strong>Suma Total Diurnas + Nocturnas:</strong></td><td><strong>${formatTime(totalDiurnas + totalNocturnas)}</strong></td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     `;
 }
+
 
 
 function generateReport(filteredData) {

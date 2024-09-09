@@ -29,6 +29,14 @@ h2 {
     text-align: center;
     margin-bottom: 30px;
 }
+h3 {
+    color: #ffffff; /* Color blanco para los títulos */
+}
+
+table th {
+    color: #ffffff; /* Color blanco para los encabezados de la tabla */
+}
+
 label {
     color: #B0BEC5;
 }
