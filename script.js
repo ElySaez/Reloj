@@ -160,99 +160,99 @@ function formatTime(seconds) {
 
     return formattedTime;
 }
-
 function mostrarResumen() {
-    const totalAprobadas = formatTime(totals.aprobadas["0%"] + totals.aprobadas["25%"] + totals.aprobadas["50%"] + totals.aprobadas["100%"]);
-    const totalRechazadas = formatTime(totals.rechazadas["0%"] + totals.rechazadas["25%"] + totals.rechazadas["50%"] + totals.rechazadas["100%"]);
-    const totalPendientes = formatTime(totals.pendientes["0%"] + totals.pendientes["25%"] + totals.pendientes["50%"] + totals.pendientes["100%"]);
-    const totalGeneral = formatTime(
-        totals.aprobadas["0%"] + totals.rechazadas["0%"] + totals.pendientes["0%"] +
-        totals.aprobadas["25%"] + totals.rechazadas["25%"] + totals.pendientes["25%"] +
-        totals.aprobadas["50%"] + totals.rechazadas["50%"] + totals.pendientes["50%"] +
-        totals.aprobadas["100%"] + totals.rechazadas["100%"] + totals.pendientes["100%"]
+    // Totales aprobadas
+    const totalAprobadas25 = formatTime(totals.aprobadas["25%"]);
+    const totalAprobadas50 = formatTime(totals.aprobadas["50%"]);
+
+    // Totales rechazadas
+    const totalRechazadas25 = formatTime(totals.rechazadas["25%"]);
+    const totalRechazadas50 = formatTime(totals.rechazadas["50%"]);
+
+    // Totales pendientes
+    const totalPendientes25 = formatTime(totals.pendientes["25%"]);
+    const totalPendientes50 = formatTime(totals.pendientes["50%"]);
+
+    // Totales generales (aprobadas menos rechazadas y pendientes)
+    const totalGeneral25 = formatTime(
+        totals.aprobadas["25%"] - totals.rechazadas["25%"] - totals.pendientes["25%"]
+    );
+    const totalGeneral50 = formatTime(
+        totals.aprobadas["50%"] - totals.rechazadas["50%"] - totals.pendientes["50%"]
     );
 
     document.getElementById('resumen-container').innerHTML = `
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <h3>Total H.E. Aprobadas</h3>
                 <table class="table table-bordered">
                     <tbody>
-                        <tr><td>Total H. E. Aprobadas al 0%:</td><td>${formatTime(totals.aprobadas["0%"])}</td></tr>
-                        <tr><td>Total H. E. Aprobadas al 25%:</td><td>${formatTime(totals.aprobadas["25%"])}</td></tr>
-                        <tr><td>Total H. E. Aprobadas al 50%:</td><td>${formatTime(totals.aprobadas["50%"])}</td></tr>
-                        <tr><td>Total H. E. Aprobadas al 100%:</td><td>${formatTime(totals.aprobadas["100%"])}</td></tr>
-                        <tr><td><strong>Total Horas Extras Aprobadas:</strong></td><td><strong>${totalAprobadas}</strong></td></tr>
+                        <tr><td>Total H. E. Diurnas al 25%:</td><td>${totalAprobadas25}</td></tr>
+                        <tr><td>Total H. E. Nocturnas al 50%:</td><td>${totalAprobadas50}</td></tr>
                     </tbody>
                 </table>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <h3>Total H.E. Rechazadas</h3>
                 <table class="table table-bordered">
                     <tbody>
-                        <tr><td>Total H. E. Rechazadas al 0%:</td><td>${formatTime(totals.rechazadas["0%"])}</td></tr>
-                        <tr><td>Total H. E. Rechazadas al 25%:</td><td>${formatTime(totals.rechazadas["25%"])}</td></tr>
-                        <tr><td>Total H. E. Rechazadas al 50%:</td><td>${formatTime(totals.rechazadas["50%"])}</td></tr>
-                        <tr><td>Total H. E. Rechazadas al 100%:</td><td>${formatTime(totals.rechazadas["100%"])}</td></tr>
-                        <tr><td><strong>Total Horas Extras Rechazadas:</strong></td><td><strong>${totalRechazadas}</strong></td></tr>
+                        <tr><td>Total H. E. Diurnas al 25%:</td><td>${totalRechazadas25}</td></tr>
+                        <tr><td>Total H. E. Nocturnas al 50%:</td><td>${totalRechazadas50}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-4">
+                <h3>Total H.E. Pendientes</h3>
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr><td>Total H. E. Diurnas al 25%:</td><td>${totalPendientes25}</td></tr>
+                        <tr><td>Total H. E. Nocturnas al 50%:</td><td>${totalPendientes50}</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
         <div class="row">
-            <div class="col-md-6">
-                <h3>Total H.E. Pendientes</h3>
-                <table class="table table-bordered">
-                    <tbody>
-                        <tr><td>Total H. E. Pendientes al 0%:</td><td>${formatTime(totals.pendientes["0%"])}</td></tr>
-                        <tr><td>Total H. E. Pendientes al 25%:</td><td>${formatTime(totals.pendientes["25%"])}</td></tr>
-                        <tr><td>Total H. E. Pendientes al 50%:</td><td>${formatTime(totals.pendientes["50%"])}</td></tr>
-                        <tr><td>Total H. E. Pendientes al 100%:</td><td>${formatTime(totals.pendientes["100%"])}</td></tr>
-                        <tr><td><strong>Total Horas Extras Pendientes:</strong></td><td><strong>${totalPendientes}</strong></td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <h3>Total General Horas Extras</h3>
                 <table class="table table-bordered">
                     <tbody>
-                        <tr><td>Total H. E. al 0%:</td><td>${formatTime(
-                          totals.aprobadas["0%"] + totals.rechazadas["0%"] + totals.pendientes["0%"]
-                        )}</td></tr>
-                        <tr><td>Total H. E. al 25%:</td><td>${formatTime(
-                          totals.aprobadas["25%"] + totals.rechazadas["25%"] + totals.pendientes["25%"]
-                        )}</td></tr>
-                        <tr><td>Total H. E. al 50%:</td><td>${formatTime(
-                          totals.aprobadas["50%"] + totals.rechazadas["50%"] + totals.pendientes["50%"]
-                        )}</td></tr>
-                        <tr><td>Total H. E. al 100%:</td><td>${formatTime(
-                          totals.aprobadas["100%"] + totals.rechazadas["100%"] + totals.pendientes["100%"]
-                        )}</td></tr>
-                        <tr><td><strong>Total Horas Extras:</strong></td><td><strong>${totalGeneral}</strong></td></tr>
+                        <tr><td>Total H. E. Diurnas al 25%:</td><td>${totalGeneral25}</td></tr>
+                        <tr><td>Total H. E. Nocturnas al 50%:</td><td>${totalGeneral50}</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     `;
 }
+
+
 function generateReport(filteredData) {
     let dailyData = {};
+    let totalDiurnasSeconds = 0;
+    let totalNocturnasSeconds = 0;
 
+    // Recorrer los registros
     filteredData.forEach(item => {
-        const dateKey = item.timestamp.toLocaleDateString();
+        // Asegurarnos de que item.timestamp sea un objeto Date
+        const timestamp = new Date(item.timestamp); // Convertir a Date si es texto
+        const dateKey = timestamp.toLocaleDateString();
+
         if (!dailyData[dateKey]) {
+            // Si no hay un registro para esta fecha, creamos uno
             dailyData[dateKey] = {
                 id: item.id,
                 date: dateKey,
-                startTime: item.timestamp,
-                endTime: item.timestamp
+                startTime: timestamp, // Asegurarnos que esto sea un objeto Date
+                endTime: timestamp,   // Asegurarnos que esto sea un objeto Date
+                autoAssigned: false // Bandera para detectar asignaciones automáticas
             };
         } else {
-            if (item.timestamp < dailyData[dateKey].startTime) {
-                dailyData[dateKey].startTime = item.timestamp;
+            // Actualizamos el registro existente si es del mismo día
+            if (timestamp < dailyData[dateKey].startTime) {
+                dailyData[dateKey].startTime = timestamp;
             }
-            if (item.timestamp > dailyData[dateKey].endTime) {
-                dailyData[dateKey].endTime = item.timestamp;
+            if (timestamp > dailyData[dateKey].endTime) {
+                dailyData[dateKey].endTime = timestamp;
             }
         }
     });
@@ -262,13 +262,47 @@ function generateReport(filteredData) {
     for (let date in dailyData) {
         const record = dailyData[date];
 
-        let startTimeFormatted = record.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        let endTimeFormatted = record.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        let startTimeFormatted;
+        let endTimeFormatted;
+        let alertMessage = ""; // Variable para almacenar la alerta
 
+        // Verificamos si las fechas de inicio y fin son diferentes usando getTime()
+        let startDay = new Date(record.startTime).setHours(0, 0, 0, 0);
+        let endDay = new Date(record.endTime).setHours(0, 0, 0, 0);
+
+        if (startDay !== endDay) {
+            // Asignar horas estándar
+            let startTimeStandard = new Date(record.startTime);
+            startTimeStandard.setHours(8, 33, 0, 0); // Entrada estándar 08:33
+
+            let endTimeStandard = new Date(record.startTime);
+            endTimeStandard.setHours(17, 33, 0, 0); // Salida estándar 17:33
+
+            record.startTime = startTimeStandard;
+            record.endTime = endTimeStandard;
+            record.autoAssigned = true; // Marcar como asignación automática
+
+            // Formatear los tiempos
+            startTimeFormatted = startTimeStandard.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            endTimeFormatted = endTimeStandard.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            // Asignar mensaje de alerta
+            alertMessage = `<span class="alert-text" style="color:red;">Hora asignada automáticamente por falta de registro</span>`;
+        } else {
+            // Si las horas son del mismo día, formateamos normalmente
+            startTimeFormatted = record.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            endTimeFormatted = record.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        // Calcular horas extras en segundos
         let { diurnalSeconds, nocturnalSeconds } = calcularHorasExtras(record.startTime, record.endTime);
 
         let diurnalFormatted = formatTime(diurnalSeconds);
         let nocturnalFormatted = formatTime(nocturnalSeconds);
+
+        // Acumular totales
+        totalDiurnasSeconds += diurnalSeconds;
+        totalNocturnasSeconds += nocturnalSeconds;
 
         // Verificación de alerta por inconsistencias
         let alertClass = '';
@@ -276,6 +310,7 @@ function generateReport(filteredData) {
             alertClass = 'alerta-horas'; // Clase para resaltar problemas
         }
 
+        // Generar contenido de la tabla
         tableContent += `
             <tr>
                 <td class="${alertClass}">${record.date}</td>
@@ -290,13 +325,34 @@ function generateReport(filteredData) {
                         <option value="PENDIENTE">PENDIENTE</option>
                     </select>
                 </td>
+                <td>${alertMessage}</td> <!-- Añadir alerta si fue asignado automáticamente -->
             </tr>
         `;
 
-        // Actualizamos los totales de horas extras dependiendo del estado
         actualizarTotales(totals, 'AUTORIZADO', diurnalFormatted, nocturnalFormatted);
     }
 
+    // Calcular el total combinado
+    let totalCombinedSeconds = totalDiurnasSeconds + totalNocturnasSeconds;
+    let totalDiurnasFormatted = formatTime(totalDiurnasSeconds);
+    let totalNocturnasFormatted = formatTime(totalNocturnasSeconds);
+    let totalCombinedFormatted = formatTime(totalCombinedSeconds);
+
+    // Añadir el total al final de la tabla
+    tableContent += `
+        <tr>
+            <td colspan="3"><strong>Total</strong></td>
+            <td><strong>${totalDiurnasFormatted}</strong></td>
+            <td><strong>${totalNocturnasFormatted}</strong></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan="4"><strong>Total Combinado</strong></td>
+            <td colspan="2"><strong>${totalCombinedFormatted}</strong></td>
+        </tr>
+    `;
+
+    // Mostrar el contenido generado
     document.getElementById('output').innerHTML = `
         <h2>Reporte de Horas Extras</h2>
         <table class="table table-bordered">
@@ -308,6 +364,7 @@ function generateReport(filteredData) {
                     <th>Horas Extras Diurnas (25%)</th>
                     <th>Horas Extras Nocturnas/Feriado (50%)</th>
                     <th>Estado</th>
+                    <th>Alerta</th> <!-- Nueva columna para la alerta -->
                 </tr>
             </thead>
             <tbody>
@@ -315,19 +372,19 @@ function generateReport(filteredData) {
             </tbody>
         </table>
     `;
-
-    // Mostrar el botón de descarga de PDF y Excel
-    if (filteredData.length > 0) {
-        document.getElementById('downloadPdfBtn').style.display = 'block';
-        document.getElementById('downloadExcelBtn').style.display = 'block';
-    } else {
-        document.getElementById('downloadPdfBtn').style.display = 'none';
-        document.getElementById('downloadExcelBtn').style.display = 'none';
-    }
-
-    mostrarResumen();
+    mostrarResumen()
 }
 
+// Función para formatear correctamente los segundos a hh:mm:ss
+function formatTime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    return [hours, mins, secs]
+        .map(unit => String(unit).padStart(2, '0'))
+        .join(':');
+}
 function updateTotal(selectElement, date, horasExtrasDiurnas, horasExtrasNocturnas) {
     const row = selectElement.closest('tr');
     const newStatus = selectElement.value; // Nuevo estado seleccionado
