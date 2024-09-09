@@ -11,7 +11,6 @@ const feriados = [
     '16-07', '15-08', '18-09', '19-09', '20-09', '12-10', '27-10', '31-10',
     '01-11', '08-12', '25-12'
 ];
-
 function handleFile() {
     fetch('Data.dat')
         .then(response => response.text())
@@ -57,40 +56,61 @@ function filterData() {
     generateReport(filteredData);
 }
 function esFeriado(fecha) {
-    const day = fecha.getDay();
+    const day = fecha.getDay(); // Obtener el día de la semana (0 es domingo, 6 es sábado)
     const formattedDate = `${("0" + fecha.getDate()).slice(-2)}-${("0" + (fecha.getMonth() + 1)).slice(-2)}`;
+    
+    // Agregar un console.log para depuración
+    console.log("Fecha:", fecha, "Día:", day, "¿Es feriado?", feriados.includes(formattedDate), "¿Es fin de semana?", (day === 0 || day === 6));
+
+    // Verificar si es fin de semana o está en la lista de feriados
     return day === 0 || day === 6 || feriados.includes(formattedDate);
 }
+
+
 function calcularHorasExtras(startTime, endTime) {
+    // Definir horarios del día laboral (de 08:33 a 17:33)
     const startOfWorkDay = new Date(startTime);
-    startOfWorkDay.setHours(8, 33, 0, 0);
+    startOfWorkDay.setHours(8, 33, 0, 0); // Inicio laboral 08:33
 
     const endOfWorkDay = new Date(startTime);
-    endOfWorkDay.setHours(17, 33, 0, 0);
+    endOfWorkDay.setHours(17, 33, 0, 0); // Fin laboral 17:33
 
+    // Definir los intervalos de horas extras
     const startOfDiurnalOvertime = new Date(startTime);
-    startOfDiurnalOvertime.setHours(17, 33, 0, 0);
+    startOfDiurnalOvertime.setHours(17, 34, 0, 0); // Inicio horas extras diurnas
 
     const endOfDiurnalOvertime = new Date(startTime);
-    endOfDiurnalOvertime.setHours(21, 0, 0, 0);
+    endOfDiurnalOvertime.setHours(20, 59, 59, 999); // Fin horas extras diurnas
 
     const startOfNocturnalOvertime = new Date(startTime);
-    startOfNocturnalOvertime.setHours(21, 0, 0, 0);
+    startOfNocturnalOvertime.setHours(21, 0, 0, 0); // Inicio horas extras nocturnas
 
+    // Variables para acumular el total de segundos
     let diurnalOvertimeSeconds = 0;
     let nocturnalOvertimeSeconds = 0;
+    let workSeconds = 0;
 
+    // Si es feriado o fin de semana, todas las horas se consideran nocturnas
     if (esFeriado(startTime)) {
-        nocturnalOvertimeSeconds = (endTime - startTime) / 1000;
+        nocturnalOvertimeSeconds = (endTime - startTime) / 1000; // Todas las horas son nocturnas en feriados/fines de semana
     } else {
+        // Si la entrada es antes del inicio laboral, ajustar al horario laboral
         if (startTime < startOfWorkDay) {
             startTime = startOfWorkDay;
         }
 
-        if (endTime > endOfWorkDay) {
-            if (endTime <= endOfDiurnalOvertime) {
+        // Si la salida es antes del fin del horario laboral
+        if (endTime <= endOfWorkDay) {
+            workSeconds = (endTime - startTime) / 1000; // Tiempo dentro del horario laboral
+        } else {
+            // Contabilizar las horas laborales completas
+            workSeconds = (endOfWorkDay - startTime) / 1000;
+
+            // Si la salida está en el rango de horas extras diurnas (de 17:34 a 20:59)
+            if (endTime > endOfWorkDay && endTime <= endOfDiurnalOvertime) {
                 diurnalOvertimeSeconds = (endTime - endOfWorkDay) / 1000;
-            } else {
+            } else if (endTime > endOfDiurnalOvertime) {
+                // Si hay horas extras diurnas y nocturnas
                 diurnalOvertimeSeconds = (endOfDiurnalOvertime - endOfWorkDay) / 1000;
                 nocturnalOvertimeSeconds = (endTime - startOfNocturnalOvertime) / 1000;
             }
@@ -99,9 +119,11 @@ function calcularHorasExtras(startTime, endTime) {
 
     return {
         diurnalSeconds: Math.round(diurnalOvertimeSeconds),
-        nocturnalSeconds: Math.round(nocturnalOvertimeSeconds)
+        nocturnalSeconds: Math.round(nocturnalOvertimeSeconds),
+        workSeconds: Math.round(workSeconds)
     };
 }
+
 function actualizarTotales(totals, status, horasExtrasDiurnas, horasExtrasNocturnas, restar = false) {
     const diurnasPartes = horasExtrasDiurnas.split(':');
     const nocturnasPartes = horasExtrasNocturnas.split(':');
@@ -404,6 +426,15 @@ function downloadExcel() {
             if (cellIndex === 5) { // Columna "Estado"
                 const selectElement = cell.querySelector('select');
                 rowData.push(selectElement ? selectElement.value : cell.textContent);
+            } else if (cellIndex === 0 || cellIndex === 1) { // Columnas de Horas Extras
+                const timeText = cell.textContent.trim();
+                
+                // Si el texto de la hora tiene formato hh:mm:ss, lo mantenemos como está
+                if (timeText.match(/^\d{2}:\d{2}:\d{2}$/)) {
+                    rowData.push(timeText); // Guardar directamente como texto "hh:mm:ss"
+                } else {
+                    rowData.push(timeText); // Si no es un formato de hora válido, dejar tal cual
+                }
             } else {
                 rowData.push(cell.textContent);
             }
@@ -415,6 +446,19 @@ function downloadExcel() {
     // Añadir los datos a la hoja
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
 
+    // Configurar el formato de las celdas para que Excel las interprete como horas
+    const timeCols = [0, 1]; // Asumiendo que las columnas 0 y 1 son de horas extras
+    timeCols.forEach(colIndex => {
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let row = range.s.r + 1; row <= range.e.r; ++row) { // Saltar encabezado
+            const cellAddress = XLSX.utils.encode_cell({r: row, c: colIndex});
+            const cell = ws[cellAddress];
+            if (cell) {
+                cell.z = 'h:mm:ss'; // Aplicar formato de horas a esas celdas
+            }
+        }
+    });
+
     // Añadir la hoja al libro
     XLSX.utils.book_append_sheet(wb, ws, "Horas Extras");
 
@@ -423,6 +467,8 @@ function downloadExcel() {
     const fileName = `reporte_horas_extras_ID_${reportID}.xlsx`;
     XLSX.writeFile(wb, fileName);
 }
+
+
 
 
 
