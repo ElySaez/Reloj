@@ -294,8 +294,14 @@ function generateReport(filteredData) {
         </table>
     `;
 
-    // Mostrar el botón de descarga de PDF
-    document.getElementById('downloadPdfBtn').style.display = 'block';
+    // Mostrar el botón de descarga de PDF y Excel
+    if (filteredData.length > 0) {
+        document.getElementById('downloadPdfBtn').style.display = 'block';
+        document.getElementById('downloadExcelBtn').style.display = 'block';
+    } else {
+        document.getElementById('downloadPdfBtn').style.display = 'none';
+        document.getElementById('downloadExcelBtn').style.display = 'none';
+    }
 
     mostrarResumen();
 }
@@ -376,6 +382,46 @@ function downloadPDF() {
     // Guardar el archivo con un nombre dinámico basado en el ID
     const fileName = `reporte_horas_extras_ID_${reportID}.pdf`;
     doc.save(fileName);
+}
+function downloadExcel() {
+    // Crear una nueva hoja de cálculo (workbook) y hoja (worksheet)
+    const wb = XLSX.utils.book_new();
+    const ws_data = [];
+    
+    // Añadir encabezado de la tabla solo una vez
+    const table = document.querySelector('#output table');
+    const headers = Array.from(table.querySelectorAll('thead tr th')).map(th => th.textContent);
+    ws_data.push(headers);
+
+    // Obtener el contenido de la tabla sin duplicar el encabezado
+    const rows = table.querySelectorAll('tbody tr');
+
+    rows.forEach(row => {
+        const rowData = [];
+        const cells = row.querySelectorAll('td');
+
+        cells.forEach((cell, cellIndex) => {
+            if (cellIndex === 5) { // Columna "Estado"
+                const selectElement = cell.querySelector('select');
+                rowData.push(selectElement ? selectElement.value : cell.textContent);
+            } else {
+                rowData.push(cell.textContent);
+            }
+        });
+
+        ws_data.push(rowData);
+    });
+
+    // Añadir los datos a la hoja
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+    // Añadir la hoja al libro
+    XLSX.utils.book_append_sheet(wb, ws, "Horas Extras");
+
+    // Descargar el archivo Excel
+    const reportID = document.getElementById('idInput').value || 'Desconocido';
+    const fileName = `reporte_horas_extras_ID_${reportID}.xlsx`;
+    XLSX.writeFile(wb, fileName);
 }
 
 
