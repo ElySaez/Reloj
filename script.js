@@ -235,7 +235,6 @@ function generateReport(filteredData) {
 
     // Recorrer los registros
     filteredData.forEach(item => {
-        // Asegurarnos de que item.timestamp sea un objeto Date
         const timestamp = new Date(item.timestamp); // Convertir a Date si es texto
         const dateKey = timestamp.toLocaleDateString();
 
@@ -268,11 +267,8 @@ function generateReport(filteredData) {
         let endTimeFormatted;
         let alertMessage = ""; // Variable para almacenar la alerta
 
-        // Verificamos si las fechas de inicio y fin son diferentes usando getTime()
-        let startDay = new Date(record.startTime).setHours(0, 0, 0, 0);
-        let endDay = new Date(record.endTime).setHours(0, 0, 0, 0);
-
-        if (startDay !== endDay) {
+        // Verificamos si hay una sola marca en el día (inicio y fin iguales)
+        if (record.startTime.getTime() === record.endTime.getTime()) {
             // Asignar horas estándar
             let startTimeStandard = new Date(record.startTime);
             startTimeStandard.setHours(8, 33, 0, 0); // Entrada estándar 08:33
@@ -291,7 +287,7 @@ function generateReport(filteredData) {
             // Asignar mensaje de alerta
             alertMessage = `<span class="alert-text" style="color:red;">Hora asignada automáticamente por falta de registro</span>`;
         } else {
-            // Si las horas son del mismo día, formateamos normalmente
+            // Si hay dos marcas, formateamos normalmente
             startTimeFormatted = record.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             endTimeFormatted = record.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
@@ -374,7 +370,7 @@ function generateReport(filteredData) {
             </tbody>
         </table>
     `;
-    mostrarResumen()
+    mostrarResumen();
 }
 
 // Función para formatear correctamente los segundos a hh:mm:ss
