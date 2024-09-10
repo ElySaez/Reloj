@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', handleFile);
 
 let data = [];
+let totalDiurnasSeconds = 0;
+let totalNocturnasSeconds = 0;
 let registroHoras = {};
 let totals = {
     aprobadas: { "0%": 0, "25%": 0, "50%": 0, "100%": 0 },
@@ -58,7 +60,6 @@ function filterData() {
 
     generateReport(filteredData);
 }
-
 function esFeriado(fecha) {
     const day = fecha.getDay(); // Obtener el día de la semana (0 es domingo, 6 es sábado)
     const formattedDate = `${("0" + fecha.getDate()).slice(-2)}-${("0" + (fecha.getMonth() + 1)).slice(-2)}`;
@@ -69,8 +70,6 @@ function esFeriado(fecha) {
     // Verificar si es fin de semana o está en la lista de feriados
     return day === 0 || day === 6 || feriados.includes(formattedDate);
 }
-
-
 function calcularHorasExtras(startTime, endTime) {
     // Definir horarios del día laboral (de 08:33 a 17:33)
     const startOfWorkDay = new Date(startTime);
@@ -122,8 +121,6 @@ function calcularHorasExtras(startTime, endTime) {
         workSeconds: Math.round(workSeconds)
     };
 }
-
-
 function actualizarTotales(totals, status, horasExtrasDiurnas, horasExtrasNocturnas, restar = false) {
     const diurnasPartes = horasExtrasDiurnas.split(':');
     const nocturnasPartes = horasExtrasNocturnas.split(':');
@@ -145,7 +142,6 @@ function actualizarTotales(totals, status, horasExtrasDiurnas, horasExtrasNoctur
         totals.pendientes["50%"] += segundosNocturnas * factor;
     }
 }
-
 function mostrarResumen() {
     // Totales individuales por estado
     const totalAprobadasDiurnas = totals.aprobadas["25%"];
@@ -224,16 +220,6 @@ function mostrarResumen() {
     console.log("Totales Pendientes Nocturnas:", totalPendientesNocturnasFormatted);
     console.log("Total Horas Nocturnas:", totalNocturnasFormatted);
 }
-
-
-
-
-
-
-
-let totalDiurnasSeconds = 0;
-let totalNocturnasSeconds = 0;
-
 function generateReport(filteredData) {
     // Reiniciar los totales al generar un nuevo reporte
     totalDiurnasSeconds = 0;
@@ -444,7 +430,7 @@ function generateReport(filteredData) {
         let nocturnalFormatted = "00:00:00";
 
         if (record.startTime.getTime() === record.endTime.getTime()) {
-            alertMessage = `<span class="alert-text" style="color:red;">Falta de marcación - Horas extras no calculadas</span>`;
+            alertMessage = `<span class="alert-text" style="color:red;">Falta de marcación - Horas extras no calculadas- Calcular manualmente</span>`;
         } else {
             let { diurnalSeconds, nocturnalSeconds } = calcularHorasExtras(record.startTime, record.endTime);
 
@@ -604,11 +590,6 @@ function updateTotal(selectElement, date, horasExtrasDiurnas, horasExtrasNocturn
     // Volvemos a generar el resumen
     mostrarResumen();
 }
-
-
-
-
-
 function actualizarTotales(totals, status, horasExtrasDiurnas, horasExtrasNocturnas, restar = false) {
     // Convertimos las horas extras en segundos
     const diurnasPartes = horasExtrasDiurnas.split(':').map(Number);
@@ -634,8 +615,6 @@ function actualizarTotales(totals, status, horasExtrasDiurnas, horasExtrasNoctur
 
     console.log("Totales actualizados:", totals);
 }
-
-
 function reinicializarTotales() {
     totals = {
         aprobadas: { "0%": 0, "25%": 0, "50%": 0, "100%": 0 },
@@ -643,7 +622,6 @@ function reinicializarTotales() {
         pendientes: { "0%": 0, "25%": 0, "50%": 0, "100%": 0 }
     };
 }
-
 function reinicializarTotales() {
     totals = {
         aprobadas: { "0%": 0, "25%": 0, "50%": 0, "100%": 0 },
@@ -651,7 +629,6 @@ function reinicializarTotales() {
         pendientes: { "0%": 0, "25%": 0, "50%": 0, "100%": 0 }
     };
 }
-
 function resetTotals() {
     totals = {
         aprobadas: { "0%": 0, "25%": 0, "50%": 0, "100%": 0 },
