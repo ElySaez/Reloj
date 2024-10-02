@@ -89,12 +89,12 @@ function calcularHorasExtras(startTime, endTime) {
     let diurnalOvertimeSeconds = 0;
     let nocturnalOvertimeSeconds = 0;
     let workSeconds = 0;
+    let alertMessage = ""; // Alerta roja
 
     // Condición específica para el 17 de septiembre
     const isSept17 = startTime.getMonth() === 8 && startTime.getDate() === 17;
     
     if (isSept17) {
-        // Ajuste para el cálculo de horas extras el 17 de septiembre desde las 12:00
         const startOfDiurnalSept17 = new Date(startTime);
         startOfDiurnalSept17.setHours(12, 0, 0, 0);
 
@@ -109,7 +109,6 @@ function calcularHorasExtras(startTime, endTime) {
             nocturnalOvertimeSeconds = (endTime - startOfNocturnalOvertime) / 1000;
         }
     } else if (!esFeriado(startTime)) {
-        // Lógica general para días normales
         if (startTime < startOfWorkDay) {
             startTime = startOfWorkDay;
         }
@@ -127,18 +126,23 @@ function calcularHorasExtras(startTime, endTime) {
             }
         }
     } else {
-        // Lógica para feriados y fines de semana
         nocturnalOvertimeSeconds = (endTime - startTime) / 1000;
+    }
+
+    // Alerta si no se registra el horario completo o hay faltas en las marcaciones
+    if (startTime.getTime() === endTime.getTime()) {
+        alertMessage = `<span class="alert-text" style="color:red;">Falta de marcación de entrada o salida - Verificar</span>`;
+    } else if ((diurnalOvertimeSeconds === 0 && nocturnalOvertimeSeconds === 0) && workSeconds === 0) {
+        alertMessage = `<span class="alert-text" style="color:red;">Faltan horas registradas - Horas extras no calculadas</span>`;
     }
 
     return {
         diurnalSeconds: Math.round(diurnalOvertimeSeconds),
         nocturnalSeconds: Math.round(nocturnalOvertimeSeconds),
-        workSeconds: Math.round(workSeconds)
+        workSeconds: Math.round(workSeconds),
+        alertMessage: alertMessage // Incluir mensaje de alerta
     };
 }
-
-
 function actualizarTotales(totals, status, horasExtrasDiurnas, horasExtrasNocturnas, restar = false) {
     const diurnasPartes = horasExtrasDiurnas.split(':');
     const nocturnasPartes = horasExtrasNocturnas.split(':');
@@ -283,18 +287,26 @@ function generateReport(filteredData) {
         let diurnalFormatted = "00:00:00";
         let nocturnalFormatted = "00:00:00";
 
+        // Si la hora de inicio y la hora de fin son iguales, mostrar alerta de falta de marcación
         if (record.startTime.getTime() === record.endTime.getTime()) {
-            alertMessage = `<span class="alert-text" style="color:red;">Falta de marcación - Horas extras no calculadas- Calcular manualmente</span>`;
+            alertMessage = `<span class="alert-text" style="color:red;">Falta de marcación - Horas extras no calculadas - Calcular manualmente</span>`;
         } else {
-            let { diurnalSeconds, nocturnalSeconds } = calcularHorasExtras(record.startTime, record.endTime);
+            // Calcular las horas extras
+            let { diurnalSeconds, nocturnalSeconds, alertMessage: extraAlertMessage } = calcularHorasExtras(record.startTime, record.endTime);
 
             diurnalFormatted = formatTime(diurnalSeconds);
             nocturnalFormatted = formatTime(nocturnalSeconds);
 
             totalDiurnasSeconds += diurnalSeconds;
             totalNocturnasSeconds += nocturnalSeconds;
+
+            // Añadir mensaje de alerta adicional si hay horas incompletas
+            if (extraAlertMessage) {
+                alertMessage = extraAlertMessage;
+            }
         }
 
+        // Si ambas horas extras diurnas y nocturnas son "00:00:00", marcar alerta en la fila
         if (diurnalFormatted === "00:00:00" && nocturnalFormatted === "00:00:00") {
             alertClass = 'alerta-horas';
         }
@@ -377,6 +389,7 @@ function generateReport(filteredData) {
     document.getElementById('downloadPdfBtn').style.display = 'block';
     document.getElementById('downloadExcelBtn').style.display = 'block';
 }
+
 function captureTotals() {
     let totalDiurnasFormatted = formatTime(totalDiurnasSeconds);
     let totalNocturnasFormatted = formatTime(totalNocturnasSeconds);
@@ -402,170 +415,7 @@ function captureTotals() {
         </tfoot>
     `;
 }
-function generateReport(filteredData) {
-    // Reiniciar los totales al generar un nuevo reporte
-    totalDiurnasSeconds = 0;
-    totalNocturnasSeconds = 0;
-    
-    let dailyData = {};
 
-    // Recorrer los registros para generar los datos diarios
-    filteredData.forEach(item => {
-        const timestamp = new Date(item.timestamp);
-        const dateKey = timestamp.toLocaleDateString();
-
-        if (!dailyData[dateKey]) {
-            // Crear un nuevo registro para la fecha
-            dailyData[dateKey] = {
-                id: item.id,
-                date: dateKey,
-                startTime: timestamp,
-                endTime: timestamp,
-                autoAssigned: false
-            };
-        } else {
-            // Actualizar el registro existente si es la misma fecha
-            if (timestamp < dailyData[dateKey].startTime) {
-                dailyData[dateKey].startTime = timestamp;
-            }
-            if (timestamp > dailyData[dateKey].endTime) {
-                dailyData[dateKey].endTime = timestamp;
-            }
-        }
-    });
-
-    let tableContent = "";
-
-    for (let date in dailyData) {
-        const record = dailyData[date];
-
-        let startTimeFormatted = record.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        let endTimeFormatted = record.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        let alertMessage = "";
-        let alertClass = '';
-
-        let diurnalFormatted = "00:00:00";
-        let nocturnalFormatted = "00:00:00";
-
-        if (record.startTime.getTime() === record.endTime.getTime()) {
-            alertMessage = `<span class="alert-text" style="color:red;">Falta de marcación - Horas extras no calculadas- Calcular manualmente</span>`;
-        } else {
-            let { diurnalSeconds, nocturnalSeconds } = calcularHorasExtras(record.startTime, record.endTime);
-
-            diurnalFormatted = formatTime(diurnalSeconds);
-            nocturnalFormatted = formatTime(nocturnalSeconds);
-
-            totalDiurnasSeconds += diurnalSeconds;
-            totalNocturnasSeconds += nocturnalSeconds;
-        }
-
-        if (diurnalFormatted === "00:00:00" && nocturnalFormatted === "00:00:00") {
-            alertClass = 'alerta-horas';
-        }
-
-        tableContent += `
-    <tr>
-        <td class="${alertClass}">${record.date}</td>
-        <td class="${alertClass}">${startTimeFormatted}</td>
-        <td class="${alertClass}">${endTimeFormatted}</td>
-        <td class="${alertClass}">${diurnalFormatted}</td>
-        <td class="${alertClass}">${nocturnalFormatted}</td>
-        <td class="${alertClass}">
-            <select class="status-select" data-date="${record.date}" onchange="updateTotal(this, '${record.date}', '${diurnalFormatted}', '${nocturnalFormatted}')">
-                <option value="AUTORIZADO" selected>AUTORIZADO</option>
-                <option value="RECHAZADO">RECHAZADO</option>
-                <option value="PENDIENTE">PENDIENTE</option>
-            </select>
-        </td>
-        <td>${alertMessage}</td>
-    </tr>
-`;
-
-
-        actualizarTotales(totals, 'AUTORIZADO', diurnalFormatted, nocturnalFormatted);
-    }
-    // Convertir los totales de segundos a formato hh:mm:ss
-    let totalCombinedSeconds = totalDiurnasSeconds + totalNocturnasSeconds;
-    
-    // Formatear totales
-    let totalDiurnasFormatted = formatTime(totalDiurnasSeconds);
-    let totalNocturnasFormatted = formatTime(totalNocturnasSeconds);
-    let totalCombinedFormatted = formatTime(totalCombinedSeconds);
-
-    // Añadir las filas de totales correctamente al final
-    let totalRows = `
-        <tr>
-            <td colspan="3"><strong>Total</strong></td>
-            <td><strong>${totalDiurnasFormatted}</strong></td>
-            <td><strong>${totalNocturnasFormatted}</strong></td>
-            <td></td>
-        </tr>
-        <tr>
-            <td colspan="4"><strong>Total Combinado</strong></td>
-            <td colspan="2"><strong>${totalCombinedFormatted}</strong></td>
-        </tr>
-    `;
-
-    // Mostrar el contenido de la tabla en el DOM
-    document.getElementById('output').innerHTML = `
-        <h2>Reporte de Horas Extras</h2>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Hora Inicio</th>
-                    <th>Hora Fin</th>
-                    <th>Horas Extras Diurnas (25%)</th>
-                    <th>Horas Extras Nocturnas/Feriado (50%)</th>
-                    <th>Estado</th>
-                    <th>Alerta</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${tableContent}
-            </tbody>
-            <tfoot>
-                ${totalRows}
-            </tfoot>
-        </table>
-    `;
-    // Mostrar el contenido de la tabla en el DOM
-    document.getElementById('output').innerHTML = `
-        <h2>Reporte de Horas Extras</h2>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Hora Inicio</th>
-                    <th>Hora Fin</th>
-                    <th>Horas Extras Diurnas (25%)</th>
-                    <th>Horas Extras Nocturnas/Feriado (50%)</th>
-                    <th>Estado</th>
-                    <th>Alerta</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${tableContent}
-            </tbody>
-            <tfoot>
-                ${totalRows}
-            </tfoot>
-        </table>
-    `;
-
-    // Aquí es donde se debe agregar el código para inicializar el estado anterior
-    document.querySelectorAll('.status-select').forEach((selectElement) => {
-        const currentStatus = selectElement.value;
-        selectElement.setAttribute('data-previous-status', currentStatus); // Guardamos el estado inicial
-    });
-
-    // Mostrar el resumen
-    mostrarResumen();
-
-    // Mostrar los botones de descarga PDF y Excel una vez generado el reporte
-    document.getElementById('downloadPdfBtn').style.display = 'block';
-    document.getElementById('downloadExcelBtn').style.display = 'block';
-}
 // Función para formatear correctamente los segundos a hh:mm:ss
 function formatTime(seconds) {
     if (seconds < 0) return "00:00:00"; // Evitar mostrar tiempos negativos
