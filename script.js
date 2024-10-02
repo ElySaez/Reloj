@@ -71,7 +71,6 @@ function esFeriado(fecha) {
     return day === 0 || day === 6 || feriados.includes(formattedDate);
 }
 function calcularHorasExtras(startTime, endTime) {
-    // Definir horarios del día laboral (de 08:33 a 17:33)
     const startOfWorkDay = new Date(startTime);
     startOfWorkDay.setHours(8, 33, 0, 0);
 
@@ -91,18 +90,35 @@ function calcularHorasExtras(startTime, endTime) {
     let nocturnalOvertimeSeconds = 0;
     let workSeconds = 0;
 
-    if (esFeriado(startTime)) {
-        nocturnalOvertimeSeconds = (endTime - startTime) / 1000;
-    } else {
+    // Condición específica para el 17 de septiembre
+    const isSept17 = startTime.getMonth() === 8 && startTime.getDate() === 17;
+    
+    if (isSept17) {
+        // Ajuste para el cálculo de horas extras el 17 de septiembre desde las 12:00
+        const startOfDiurnalSept17 = new Date(startTime);
+        startOfDiurnalSept17.setHours(12, 0, 0, 0);
+
+        if (startTime < startOfDiurnalSept17) {
+            startTime = startOfDiurnalSept17;
+        }
+        
+        if (endTime <= endOfDiurnalOvertime) {
+            diurnalOvertimeSeconds = (endTime - startTime) / 1000;
+        } else {
+            diurnalOvertimeSeconds = (endOfDiurnalOvertime - startTime) / 1000;
+            nocturnalOvertimeSeconds = (endTime - startOfNocturnalOvertime) / 1000;
+        }
+    } else if (!esFeriado(startTime)) {
+        // Lógica general para días normales
         if (startTime < startOfWorkDay) {
             startTime = startOfWorkDay;
         }
-
+        
         if (endTime <= endOfWorkDay) {
             workSeconds = (endTime - startTime) / 1000;
         } else {
             workSeconds = (endOfWorkDay - startTime) / 1000;
-
+            
             if (endTime > endOfWorkDay && endTime <= endOfDiurnalOvertime) {
                 diurnalOvertimeSeconds = (endTime - endOfWorkDay) / 1000;
             } else if (endTime > endOfDiurnalOvertime) {
@@ -110,10 +126,10 @@ function calcularHorasExtras(startTime, endTime) {
                 nocturnalOvertimeSeconds = (endTime - startOfNocturnalOvertime) / 1000;
             }
         }
+    } else {
+        // Lógica para feriados y fines de semana
+        nocturnalOvertimeSeconds = (endTime - startTime) / 1000;
     }
-
-    // Agregar depuración
-    //console.log("Diurnas:", diurnalOvertimeSeconds, "Nocturnas:", nocturnalOvertimeSeconds, "Laborales:", workSeconds);
 
     return {
         diurnalSeconds: Math.round(diurnalOvertimeSeconds),
@@ -121,6 +137,8 @@ function calcularHorasExtras(startTime, endTime) {
         workSeconds: Math.round(workSeconds)
     };
 }
+
+
 function actualizarTotales(totals, status, horasExtrasDiurnas, horasExtrasNocturnas, restar = false) {
     const diurnasPartes = horasExtrasDiurnas.split(':');
     const nocturnasPartes = horasExtrasNocturnas.split(':');
