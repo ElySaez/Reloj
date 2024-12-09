@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Horas Extras</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jsPDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.14/jspdf.plugin.autotable.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-6 col-lg-4">
+                <h1>Generador de Reportes</h1>
+                <div class="form-group">
+                    <label for="idInput">ID:</label>
+                    <input type="number" id="idInput" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="monthInput">Mes:</label>
+                    <input type="number" id="monthInput" class="form-control" min="1" max="12">
+                </div>
+                <div class="form-group">
+                    <label for="yearInput">Año:</label>
+                    <input type="number" id="yearInput" class="form-control">
+                </div>
+                <button onclick="filterData()" class="btn btn-primary btn-block">Generar Reporte</button>
+                <button id="downloadPdfBtn" class="btn btn-success btn-block mt-3" onclick="downloadPDF()" style="display:none;">Descargar PDF</button>
+                <button id="downloadExcelBtn" class="btn btn-success btn-block mt-3" onclick="downloadExcel()" style="display:none;">Descargar Excel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección separada para el reporte -->
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-12">
+                
+                <div id="output" class="table-responsive mt-3"></div> <!-- Aquí se cargará el reporte -->
+                <div id="resumen-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="he.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+
+</body>
+</html>
