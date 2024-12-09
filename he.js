@@ -192,7 +192,9 @@ function mostrarResumen() {
     console.log("Horas extras nocturnas:", totalNocturnasFormatted);
     console.log("Total combinado:", totalCombinedFormatted);
 }
-
+function redirectToIndex() {
+    window.location.href = "index.html"; // Redirigir al archivo index.html
+}
 function generateReport(filteredData) {
     totalDiurnasSeconds = 0;
     totalNocturnasSeconds = 0;

@@ -392,9 +392,7 @@ function generateReport(filteredData) {
 function redirectToSpecial() {
     window.location.href = "hoemhe.html"; // Redirigir al archivo especificado
 }
-function redirectToIndex() {
-    window.location.href = "index.html"; // Redirigir al archivo index.html
-}
+
 function captureTotals() {
     let totalDiurnasFormatted = formatTime(totalDiurnasSeconds);
     let totalNocturnasFormatted = formatTime(totalNocturnasSeconds);
