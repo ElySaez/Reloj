@@ -102,6 +102,24 @@ table thead {
     background-color: #0288D1;
     color: white;
 }
+.btn-home {
+    background-color: #FF7043; /* Fondo color naranja */
+    color: white; /* Texto blanco */
+    border: none; /* Sin bordes */
+    border-radius: 30px; /* Bordes redondeados */
+    padding: 10px 20px; /* Espaciado interno */
+    font-size: 16px; /* Tamaño del texto */
+    text-align: center; /* Centrar el texto */
+    margin-top: 15px; /* Separación superior */
+    width: 100%; /* Ancho completo */
+    transition: background-color 0.3s ease; /* Animación al pasar el cursor */
+}
+
+.btn-home:hover {
+    background-color: #D84315; /* Fondo más oscuro al pasar el cursor */
+    color: white; /* Mantener texto blanco */
+}
+
 
 table tbody tr:nth-child(even) {
     background-color: #f1fbff;

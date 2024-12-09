@@ -71,13 +71,13 @@ function esFeriado(fecha) {
     return day === 0 || day === 6 || feriados.includes(formattedDate);
 }
 function calcularHorasExtras(startTime, endTime) {
-    // Horario normal: de 18:30 PM a 3:30 AM
+    // Horario normal de trabajo: 18:30 PM a 3:30 AM del día siguiente
     const startOfNormalDay = new Date(startTime);
     startOfNormalDay.setHours(18, 30, 0, 0);
 
-    const endOfNormalDay = new Date(startTime);
+    const endOfNormalDay = new Date(startOfNormalDay);
+    endOfNormalDay.setDate(endOfNormalDay.getDate() + 1); // Al día siguiente
     endOfNormalDay.setHours(3, 30, 0, 0);
-    endOfNormalDay.setDate(endOfNormalDay.getDate() + 1); // Ajustar al día siguiente
 
     const isWeekend = startTime.getDay() === 0 || startTime.getDay() === 6; // Domingo o sábado
     const isHoliday = esFeriado(startTime); // Verificar si es feriado
@@ -85,9 +85,9 @@ function calcularHorasExtras(startTime, endTime) {
     let extraDiurnalSeconds = 0; // Horas extras diurnas (25%)
     let extraNocturnalSeconds = 0; // Horas extras nocturnas/feriado (50%)
 
-    // Caso: es feriado o fin de semana
+    // Caso: es fin de semana o feriado
     if (isWeekend || isHoliday) {
-        extraNocturnalSeconds = (endTime - startTime) / 1000;
+        extraNocturnalSeconds = (endTime - startTime) / 1000; // Todo el rango cuenta como extra nocturna
     } else {
         // Caso: día laboral normal
         if (startTime < startOfNormalDay) {
@@ -101,18 +101,19 @@ function calcularHorasExtras(startTime, endTime) {
         }
     }
 
-    // Alertas si no hay horas extras calculadas
-    let alertMessage = "";
-    if (extraDiurnalSeconds === 0 && extraNocturnalSeconds === 0) {
-        alertMessage = `<span class="alert-text" style="color:red;">No hay horas extras calculadas</span>`;
-    }
+    // Excluir horas normales que no cuentan como extras
+    const normalWorkSeconds = Math.max(0, Math.min(endTime, endOfNormalDay) - Math.max(startTime, startOfNormalDay)) / 1000;
 
-    return {
+    // Total horas extras diurnas y nocturnas
+    const totalExtras = {
         diurnalSeconds: Math.round(extraDiurnalSeconds),
         nocturnalSeconds: Math.round(extraNocturnalSeconds),
-        alertMessage: alertMessage,
+        normalWorkSeconds: Math.round(normalWorkSeconds),
     };
+
+    return totalExtras;
 }
+
 
 
 function actualizarTotales(totals, status, horasExtrasDiurnas, horasExtrasNocturnas, restar = false) {
@@ -201,7 +202,7 @@ function generateReport(filteredData) {
     filteredData.forEach(item => {
         const timestamp = new Date(item.timestamp);
 
-        // Ajustar la clave de agrupación al horario
+        // Agrupamos registros por fecha clave
         let dateKey = timestamp.toLocaleDateString();
         if (timestamp.getHours() < 6) {
             // Si es antes de las 6:00 AM, pertenece al turno del día anterior
@@ -234,25 +235,15 @@ function generateReport(filteredData) {
         const record = dailyData[date];
         let startTimeFormatted = record.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         let endTimeFormatted = record.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        let diurnalFormatted = "00:00:00";
-        let nocturnalFormatted = "00:00:00";
-        let alertMessage = "";
 
-        if (record.startTime.getTime() === record.endTime.getTime()) {
-            alertMessage = `<span class="alert-text" style="color:red;">Falta de marcación - Calcular manualmente</span>`;
-        } else {
-            const { diurnalSeconds, nocturnalSeconds, alertMessage: extraAlertMessage } = calcularHorasExtras(record.startTime, record.endTime);
+        // Calcular horas extras reales
+        const { diurnalSeconds, nocturnalSeconds, normalWorkSeconds } = calcularHorasExtras(record.startTime, record.endTime);
 
-            diurnalFormatted = formatTime(diurnalSeconds);
-            nocturnalFormatted = formatTime(nocturnalSeconds);
+        const diurnalFormatted = formatTime(diurnalSeconds);
+        const nocturnalFormatted = formatTime(nocturnalSeconds);
 
-            totalDiurnasSeconds += diurnalSeconds;
-            totalNocturnasSeconds += nocturnalSeconds;
-
-            if (extraAlertMessage) {
-                alertMessage = extraAlertMessage;
-            }
-        }
+        totalDiurnasSeconds += diurnalSeconds;
+        totalNocturnasSeconds += nocturnalSeconds;
 
         tableContent += `
             <tr>
@@ -268,7 +259,7 @@ function generateReport(filteredData) {
                         <option value="PENDIENTE">PENDIENTE</option>
                     </select>
                 </td>
-                <td>${alertMessage}</td>
+                <td>${normalWorkSeconds > 0 ? '' : '<span class="alert-text" style="color:red;">Falta marca-Revisar manualmente</span>'}</td>
             </tr>
         `;
     }
@@ -295,6 +286,7 @@ function generateReport(filteredData) {
 
     mostrarResumen();
 }
+
 
 
 
